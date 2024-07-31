@@ -29,6 +29,13 @@ def main():
     
     st.sidebar.image(logo_image, width=100, use_column_width='always')  # Adding logo with glow effect
     
+    language = st.sidebar.selectbox("Select Language", ["English", "Korean"])  # Language selection
+
+    if language == "English":
+        language_value = "en-US"
+    else:
+        language_value = "ko-KR"
+
     option = st.sidebar.radio("Select an option", ["Single Call", "Bulk Call", "Call Details", "Call Logs"])
 
     # Display hint prompt
@@ -37,36 +44,36 @@ def main():
         st.write(hint_prompt)
 
     if option == "Single Call":
-        single_call()
+        single_call(language_value)
     elif option == "Bulk Call":
-        bulk_call()
+        bulk_call(language_value)
     elif option == "Call Details":
-        call_details()
+        call_details(language_value)
     elif option == "Call Logs":
-        call_logs()
+        call_logs(language_value)
 
 # Function to make a single call
-def single_call():
+def single_call(language_value):
     st.subheader("Single Call")
     phone_number = st.text_input("Enter Phone Number")
     task = st.text_area("Enter task prompt")
     transfer_phone_number = st.text_input("Enter the Transfer Phone Number")
     make_call_button = st.button("Make Call")
     if make_call_button and phone_number and task and transfer_phone_number:
-        response = make_single_call_api(phone_number, task,transfer_phone_number)
+        response = make_single_call_api(phone_number, task, transfer_phone_number, language_value)
 
 # Function to make bulk calls 
-def bulk_call():
+def bulk_call(language_value):
     st.subheader("Bulk Call")
     uploaded_file = st.file_uploader("Upload CSV File", type=["csv"])
     task = st.text_area("Enter task prompt")
     transfer_phone_number = st.text_input("Enter the Transfer Phone Number")
     make_bulk_call_button = st.button("Make Bulk Call")
     if make_bulk_call_button and uploaded_file is not None and task and transfer_phone_number:
-        response = make_bulk_call_api(uploaded_file, task,transfer_phone_number)
+        response = make_bulk_call_api(uploaded_file, task, transfer_phone_number, language_value)
 
 # Function to fetch call details
-def call_details():
+def call_details(language_value):
     st.subheader("Call Details")
     call_id = st.text_input("Enter Call ID")
     fetch_call_details_button = st.button("Fetch Call Details")
@@ -82,7 +89,7 @@ def call_details():
                     st.write(f"{transcript['user']}: {transcript['text']}")
 
 # Function to fetch call logs
-def call_logs():
+def call_logs(language_value):
     st.subheader("Call Logs")
     response = fetch_call_logs_api()
 
@@ -91,22 +98,22 @@ def call_logs():
         st.write(df)
 
 # Function to make a single call using API
-def make_single_call_api(phone_number, task, transfer_phone_number):
+def make_single_call_api(phone_number, task, transfer_phone_number, language_value):
     headers = {"Authorization": API_KEY}
-    data = {"phone_number": phone_number, "task": task, "voice": "e1289219-0ea2-4f22-a994-c542c2a48a0f", "transfer_phone_number": transfer_phone_number}
+    data = {"phone_number": phone_number, "task": task, "voice": "e1289219-0ea2-4f22-a994-c542c2a48a0f", "transfer_phone_number": transfer_phone_number, "language": language_value}
     response = requests.post("https://api.bland.ai/v1/calls", data=data, headers=headers)
     st.write(response.json())
     return response
 
 # Function to make bulk calls using API
-def make_bulk_call_api(uploaded_file, task, transfer_phone_number):
+def make_bulk_call_api(uploaded_file, task, transfer_phone_number, language_value):
     headers = {"Authorization": API_KEY}
     try:
         df = pd.read_csv(uploaded_file)
         if "Phone Number" in df.columns:
             phone_numbers = df["Phone Number"].tolist()
             for phone_number in phone_numbers:
-                data = {"phone_number": phone_number, "task": task, "transfer_phone_number": transfer_phone_number}
+                data = {"phone_number": phone_number, "task": task, "transfer_phone_number": transfer_phone_number, "language": language_value}
                 response = requests.post("https://api.bland.ai/v1/calls", data=data, headers=headers)
                 st.write(response.json())  # You can modify this to handle the responses as needed
             return response
